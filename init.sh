@@ -49,52 +49,43 @@ command -v mvn -q >/dev/null 2>&1 || { echo >&2 "Maven is required but not insta
 
 # make some checks first before proceeding.	
 if [ -r $SRC_DIR/$EAP ] || [ -L $SRC_DIR/$EAP ]; then
-	echo EAP installer is present...
-	echo
+	printf "\n EAP installer is present..."
 else
-	echo Need to download $EAP package from the Customer Portal 
-	echo and place it in the $SRC_DIR directory to proceed...
-	echo
+	printf "\n Need to download $EAP package from the Customer Portal"
+	printf "\n\t and place it in the $SRC_DIR directory to proceed... \n"
 	exit
 fi
 
 if [ -r $SRC_DIR/$JDG ] || [ -L $SRC_DIR/$JDG ]; then
-		echo JDG installer is present...
-		echo
+		printf "\n JDG installer is present..."
 else
-		echo Need to download $JDG installer from the Customer Portal 
-		echo and place it in the $SRC_DIR directory to proceed...
-		echo
+		printf "\n Need to download $JDG installer from the Customer Portal" 
+		printf "\n\t and place it in the $SRC_DIR directory to proceed... \n"
 		exit
 fi
 
 # Remove the old JBoss instance, if it exists.
 if [ -x $TARGET_DIR/. ]; then
-	echo "  - removing existing demo installation..."
-	echo
+	printf "\n  - removing existing demo installation... \n"
 	rm -rf $TARGET_DIR/*
 fi
 
 #read
 
 # Run installers.
-echo "JBoss EAP installer running now..."
-echo
+printf "\n JBoss EAP installer running now..."
 java -jar $SRC_DIR/$EAP $SUPPORT_DIR/installation-eap -variablefile $SUPPORT_DIR/installation-eap.variables
 
 if [ $? -ne 0 ]; then
-	echo
-	echo Error occurred during JBoss EAP installation!
+	printf "\n Error occurred during JBoss EAP installation!"
 	exit
 fi
 
-echo
-echo "JBoss JDG installer running now..."
-echo
+printf "\n JBoss JDG installer running now... \n"
 unzip -q $SRC_DIR/$JDG -d $TARGET_DIR/
 
 if [ $? -ne 0 ]; then
-	echo Error occurred during $PRODUCT installation
+	printf "\n Error occurred during $PRODUCT installation \n"
 	exit
 fi
 
@@ -108,39 +99,33 @@ fi
 #rm -rf $PATCH_DIR
 
 # Add execute permissions to the standalone.sh script.
-echo "  - making sure all server scripts are executable..."
-echo
+printf "\t - making sure all server scripts are executable... \n"
+
 chmod u+x $JBOSS_HOME/bin/*.sh
 chmod u+x $JDG_HOME/bin/*.sh
 
-echo Cloning the EAP standlone server base into eap_node1 and eap_node2
+printf "\n Cloning the EAP standlone server base into eap_node1 and eap_node2"
 cp -r $EAP_BASE_SERVER_DIR $JBOSS_HOME/eap_node1
 cp -r $EAP_BASE_SERVER_DIR $JBOSS_HOME/eap_node2
 
-echo "  - EAP: setting up standalone-ha.xml configuration adjustments..."
-echo
+printf "\n\t  - EAP: setting up standalone-ha.xml configuration adjustments... \n"
 cp $SUPPORT_DIR/standalone-ha.xml $JBOSS_HOME/eap_node1/configuration/ 
 cp $SUPPORT_DIR/standalone-ha.xml $JBOSS_HOME/eap_node2/configuration/
 
-echo
-echo Building the Payment CDI Event web application. 
-echo
+printf "\n Building the Payment CDI Event web application. \n"
 cd $PRJ_DIR
 mvn clean install
 
-echo
-echo Deploying the Payment CDI Event web application. 
-echo
+printf "\n Deploying the Payment CDI Event web application. \n" 
+
 cp target/jboss-payment-cdi-event.war ../../$JBOSS_HOME/eap_node1/deployments/jboss-payment-cdi-event.war
 touch ../../$JBOSS_HOME/eap_node1/deployments/jboss-payment-cdi-event.war.dodeploy
 cp target/jboss-payment-cdi-event.war ../../$JBOSS_HOME/eap_node2/deployments/jboss-payment-cdi-event.war
 touch ../../$JBOSS_HOME/eap_node2/deployments/jboss-payment-cdi-event.war.dodeploy
 cd ../..
 
-echo -e "\n Now you need to start the cluster."
-echo -e "\t Use the script ./startServers.sh all"
-echo
+printf "\n Now you need to start the cluster."
+printf "\n\t Use the script ./startServers.sh all"
 
-echo "$PRODUCT $VERSION $DEMO Setup Complete."
-echo
+printf "\n\n $PRODUCT $VERSION $DEMO Setup Complete. \n"
 

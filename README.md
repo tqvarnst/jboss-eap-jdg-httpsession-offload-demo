@@ -3,7 +3,10 @@
 In this demo I'll show the new capability available in the *JBoss Data Grid 6.5*: [**Externalize HTTP Session from JBoss**](https://access.redhat.com/documentation/en-US/Red_Hat_JBoss_Data_Grid/6.5/html-single/Administration_and_Configuration_Guide/index.html#chap-Externalize_Sessions)
 
 This capability allow us to externalize the HTTP Web Sessions from the Application Server to an external (remote) Data Grid cluster.
-In some scenarios this can alleviate the Application Server memory consumption and improve the *availability* and *failover* of your Web Application User State. There are other great benefit this approach can bring to your setup: *Cross data center state replication*.
+In some scenarios this can alleviate the Application Server memory consumption and improve the *availability* and *failover* of your Web Application User State. There are others great benefits this approach can bring to your setup:
+ * **Cross data center state replication** - Session failover across remote data centers.
+ * **Passivation of sessions to JDG** - Better memory utilization in EAP with short session timeouts.
+ * **Transparent releases** (as long as session serialization is same between releases).
 
 The nice thing about this capability offered By **JBoss EAP + JDG** is that it can be completely transparent for your code.
 You don't have to change your code or implement any specific API.
@@ -45,13 +48,17 @@ This integration can be enabled just with a little of configuration in the EAP C
  sudo route add -net 224.0.0.0/4 -interface lo0
  ```
 
- 4. execute the `./startServers.sh` script
+ 4. execute the `./servers.sh` script
+ ```
+ ./servers.sh start all
+ ```
+
  5. follow the next session to test the demo.
 
 
 ## Testing
 
- * open the application in one browser window using the `eap_node1` instance: `http://localhost:8080/payment-cdi-event`
+ * open the application in one browser window using the `eap_node1` instance: `http://localhost:8080/jboss-payment-cdi-event`
   * create some Payment entries(events) to store some data in the user web session.
   * observe the session and cache info on the right side of the page.
    * take a note of the Session ID (to compare when you go to another eap node instance in the cluster)
@@ -59,31 +66,11 @@ This integration can be enabled just with a little of configuration in the EAP C
    ![payment-cdi-event web page](docs/demo-images/payment-cdi-event-node1.png "App web page")
 
   * kill the `eap_node1` instance.
-   * you can use `kill -9 <jvm PID>` in a Linux box
+  ```
+  ./servers.sh stop eap_node1
+  ```
 
-
-   > NOTE: this is possible because the user session id (`JSESSIONID`) is persisted as a cookie in the browser.
-
-```
-> cat startup_summary
-
-         jdg_node1 JVM PID: 12864
-                 jdg_node1 Hot Rod Service listening on port: 11822
-         jdg_node2 JVM PID: 13050
-                 jdg_node2 Hot Rod Service listening on port: 11922
-
- ======
-
-         eap_node1 JVM PID: 13412
-                 eap_node1 Web Server listening on port: 8080
-         eap_node2 JVM PID: 13677
-                 eap_node2 Web Server listening on port: 8180
-
-# to kill eap_node1 hit
-> kill -9 <PID>
-```
-
-  * **in the same browser window (same session)** access the `eap_node2` instance: `http://localhost:8180/payment-cdi-event`
+  * **in the same browser window (same session)** access the `eap_node2` instance: `http://localhost:8180/jboss-payment-cdi-event`
    * at this point you should see the same entries in the page.
    > NOTE: this is possible because the user session id (`JSESSIONID`) is persisted as a cookie in the browser.
 
@@ -109,10 +96,10 @@ You are disconnected at the moment. Type 'connect' to connect to the server or '
 
  * Now bring the `eap_node1` instance UP again.
 ```
-./startServers.sh eap_node1 0
+./servers.sh start eap_node1 0
 ```
 
- * open the app in the browser: `http://localhost:8080/payment-cdi-event`
+ * open the app in the browser: `http://localhost:8080/jboss-payment-cdi-event`
  * you should see the same data!!!
 
 ---
